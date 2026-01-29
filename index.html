@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+<meta charset="UTF-8">
+<title>Bike Tax Calculator</title>
+
+<style>
+  body {
+    font-family: Arial;
+    padding: 20px;
+  }
+  input {
+    margin: 4px;
+  }
+  button {
+    margin-top: 10px;
+  }
+
+  .receipt {
+    border: 1px solid #000;
+    padding: 15px;
+    margin-top: 20px;
+    width: 360px;
+    display: none;
+  }
+
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    .receipt, .receipt * {
+      visibility: visible;
+    }
+    .receipt {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<h2> यातायात व्यवस्था कार्यालय बागलुङ</h2>
+<h3>सवारी कर गणना प्रणाली (आर्थिक वर्ष अनुसार)</h3>
+
+Engine CC:<br>
+<input type="number" id="cc"><br><br>
+
+Tax Expire Date (B.S):<br>
+<input type="number" id="ey" placeholder="Year">
+<input type="number" id="em" placeholder="Month">
+<input type="number" id="ed" placeholder="Day"><br><br>
+
+Tax Paying Date (B.S):<br>
+<input type="number" id="py">
+<input type="number" id="pm">
+<input type="number" id="pd"><br><br>
+
+<button onclick="calculate()">Calculate</button>
+
+<p id="result"></p>
+
+<!-- RECEIPT -->
+<div class="receipt" id="receipt">
+  <h3 style="text-align:center">🚦 यातायात व्यवस्था कार्यालय बागलुङ</h3>
+  <p style="text-align:center"><b>सवारी कर रसिद</b></p>
+  <hr>
+
+  <div id="receiptData"></div>
+
+  <hr>
+  <p>कर्मचारी हस्ताक्षर: ____________</p>
+  <p>मिति: ____________</p>
+</div>
+
+<button onclick="printReceipt()" id="printBtn" style="display:none">
+  🖨️ Print Receipt
+</button>
+
+<script>
+// Fiscal Year: Sawan (4) to Ashad (3)
+function fiscalYear(year, month) {
+  return month >= 4 ? year : year - 1;
+}
+
+function calculate() {
+
+  let cc = +document.getElementById("cc").value;
+  let ey = +document.getElementById("ey").value;
+  let em = +document.getElementById("em").value;
+  let py = +document.getElementById("py").value;
+  let pm = +document.getElementById("pm").value;
+
+  if (!cc || !ey || !em || !py || !pm) {
+    alert("सबै विवरण भर्नुहोस्");
+    return;
+  }
+
+  // Yearly tax slab
+  let yearlyTax = cc <= 125 ? 3000 : cc <= 150 ? 5000 : cc <= 225 ? 6500 : 11000;
+
+  let expireFY = fiscalYear(ey, em);
+  let payFY = fiscalYear(py, pm);
+
+  let fyCrossed = payFY - expireFY;
+  if (fyCrossed < 0) fyCrossed = 0;
+
+  // Yearly tax including advance
+  let totalYears = fyCrossed + 1;
+  let taxAmount = yearlyTax * totalYears;
+
+  // Fine calculation
+  let fine = 0;
+  if (fyCrossed >= 1) fine += yearlyTax * 0.4;
+  if (fyCrossed >= 2) fine += yearlyTax * 0.6;
+  if (fyCrossed >= 3) fine += yearlyTax * 0.8;
+
+  // Nabikaran (FINAL RULE)
+  let nabikaran = fyCrossed >= 1 ? 900 : 300;
+
+  let total = taxAmount + fine + nabikaran;
+
+  document.getElementById("result").innerHTML = `
+    Fiscal year crossed: ${fyCrossed}<br>
+    वार्षिक कर: रु ${taxAmount}<br>
+    जरिवाना: रु ${fine}<br>
+    नवीकरण शुल्क: रु ${nabikaran}<br>
+    <b>जम्मा तिर्नुपर्ने: रु ${total}</b>
+  `;
+
+  // Receipt data
+  document.getElementById("receiptData").innerHTML = `
+    Engine CC: ${cc}<br>
+    Fiscal Year Crossed: ${fyCrossed}<br>
+    वार्षिक कर: रु ${taxAmount}<br>
+    जरिवाना: रु ${fine}<br>
+    नवीकरण शुल्क: रु ${nabikaran}<br>
+    <b>जम्मा तिर्नुपर्ने: रु ${total}</b>
+  `;
+
+  document.getElementById("receipt").style.display = "block";
+  document.getElementById("printBtn").style.display = "inline";
+}
+
+function printReceipt() {
+  window.print();
+}
+</script>
+
+</body>
+</html>
